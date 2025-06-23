@@ -1,12 +1,10 @@
-
 import os
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()  # Load from .env
+load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 SYSTEM_PROMPT = """
 You are a professional resume reviewer. Given a candidate's resume text, provide helpful, concise feedback:
 - Highlight strong sections.
@@ -22,8 +20,8 @@ You are a professional resume reviewer. Given a candidate's resume text, provide
 """
 
 def generate_feedback(resume_text: str) -> dict:
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": resume_text}
@@ -32,12 +30,10 @@ def generate_feedback(resume_text: str) -> dict:
         max_tokens=800,
     )
     
-    reply = response['choices'][0]['message']['content']
+    reply = response.choices[0].message.content
     
     try:
-        # Parse it if model outputs valid JSON
         import json
         return json.loads(reply)
     except:
-        # If not, return raw text
         return {"raw_response": reply}
