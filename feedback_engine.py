@@ -37,3 +37,48 @@ def generate_feedback(resume_text: str) -> dict:
         return json.loads(reply)
     except:
         return {"raw_response": reply}
+
+
+
+def generate_match_analysis(resume_text: str, job_description: str) -> dict:
+    prompt = f"""
+You are a career advisor AI. A user provided the following resume and job description.
+
+--- RESUME ---
+{resume_text}
+
+--- JOB DESCRIPTION ---
+{job_description}
+
+Analyze how well the resume matches the job. Include:
+
+1. Match Summary (1–2 sentences)
+2. Key Strengths
+3. Gaps / Weaknesses
+4. Suggestions to Improve the Resume
+
+Output the response in this JSON format:
+{{
+  "summary": "...",
+  "strengths": ["..."],
+  "weaknesses": ["..."],
+  "suggestions": ["..."]
+}}
+"""
+    response = client.chat.completions.create(
+        model="gpt-4",  # or "gpt-3.5-turbo"
+        messages=[
+            {"role": "system", "content": "You are an expert career advisor."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.4,
+        max_tokens=1000
+    )
+
+    reply = response.choices[0].message.content
+
+    try:
+        import json
+        return json.loads(reply)
+    except:
+        return {"raw_response": reply}
