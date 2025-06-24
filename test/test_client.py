@@ -1,12 +1,16 @@
 import requests
 from pathlib import Path
 
-# File paths (resume is still in root)
 resume_path = "sources/resume.pdf"
 results_dir = Path("results")
 results_dir.mkdir(exist_ok=True)
 
 url = "http://localhost:8000/analyze-resume/"
+
+
+def format_list(items):
+    return "\n".join(f"- {item}" for item in items) if items else "_None_"
+
 
 with open(resume_path, "rb") as f:
     files = {"file": (resume_path, f, "application/pdf")}
@@ -14,11 +18,32 @@ with open(resume_path, "rb") as f:
 
 print("Status Code:", response.status_code)
 
-result_file = results_dir / "result_basic.txt"
+result_file = results_dir / "result_basic.md"
 with open(result_file, "w", encoding="utf-8") as out:
     if response.ok:
-        out.write(str(response.json()))
-        print("Saved result to:", result_file)
+        data = response.json()
+        md = f"""# Resume Feedback
+
+**Summary**  
+{data['feedback'].get('summary', '')}
+
+---
+
+**Strengths**
+{format_list(data['feedback'].get('strengths', []))}
+
+---
+
+**Weaknesses**
+{format_list(data['feedback'].get('weaknesses', []))}
+
+---
+
+**Suggestions**
+{format_list(data['feedback'].get('suggestions', []))}
+"""
+        out.write(md)
+        print("Saved to:", result_file)
     else:
-        out.write(response.text)
-        print("Error - saved error response to:", result_file)
+        out.write(f"## Error:\n\n{response.text}")
+        print("Error saved to:", result_file)
